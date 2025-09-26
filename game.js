@@ -167,7 +167,7 @@ function playerMove(offset) {
 }
 
 function playerReset() {
-  const pieces = "TJLOSZI";
+  const pieces = "ILJOZST";
   player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
   player.pos.y = 0;
   player.pos.x =
