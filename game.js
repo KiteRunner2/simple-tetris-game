@@ -173,12 +173,28 @@ function playerReset() {
   player.pos.x =
     ((arena[0].length / 2) | 0) - ((player.matrix[0].length / 2) | 0);
   if (collide(arena, player)) {
-    arena.forEach((row) => row.fill(0));
-    player.score = 0;
-    player.level = 1;
-    dropInterval = 1000;
-    updateScore();
+    gameOver();
   }
+}
+
+function gameOver() {
+  gameState = 'gameOver';
+  
+  // Update high score
+  const currentHighScore = parseInt(localStorage.getItem('tetrisHighScore') || '0');
+  const isNewHighScore = player.score > currentHighScore;
+  
+  if (isNewHighScore) {
+    localStorage.setItem('tetrisHighScore', player.score.toString());
+    document.getElementById('high-score').innerText = player.score;
+    document.getElementById('newHighScore').style.display = 'block';
+  } else {
+    document.getElementById('newHighScore').style.display = 'none';
+  }
+  
+  // Show game over modal
+  document.getElementById('finalScore').innerText = player.score;
+  document.getElementById('gameOverModal').style.display = 'flex';
 }
 
 function playerRotate(dir) {
@@ -216,6 +232,10 @@ let dropInterval = 1000;
 
 let lastTime = 0;
 function update(time = 0) {
+  if (gameState !== 'playing') {
+    return;
+  }
+  
   const deltaTime = time - lastTime;
 
   dropCounter += deltaTime;
@@ -234,7 +254,37 @@ function updateScore() {
   document.getElementById("level").innerText = player.level;
 }
 
+function restartGame() {
+  // Reset game state
+  gameState = 'playing';
+  
+  // Clear arena
+  arena.forEach((row) => row.fill(0));
+  
+  // Reset player
+  player.score = 0;
+  player.level = 1;
+  dropInterval = 1000;
+  dropCounter = 0;
+  
+  // Update UI
+  updateScore();
+  
+  // Hide game over modal
+  document.getElementById('gameOverModal').style.display = 'none';
+  
+  // Reset player piece
+  playerReset();
+  
+  // Restart game loop
+  update();
+}
+
 document.addEventListener("keydown", (event) => {
+  if (gameState !== 'playing') {
+    return;
+  }
+  
   if (event.keyCode === 37) {
     playerMove(-1);
   } else if (event.keyCode === 39) {
@@ -265,6 +315,8 @@ const colors = [
 
 const arena = createMatrix(12, 20);
 
+let gameState = 'playing'; // 'playing', 'gameOver'
+
 const player = {
   pos: { x: 0, y: 0 },
   matrix: null,
@@ -274,4 +326,12 @@ const player = {
 
 playerReset();
 updateScore();
+
+// Initialize high score from localStorage
+const storedHighScore = localStorage.getItem('tetrisHighScore') || '0';
+document.getElementById('high-score').innerText = storedHighScore;
+
+// Add restart button event listener
+document.getElementById('restartButton').addEventListener('click', restartGame);
+
 update();
